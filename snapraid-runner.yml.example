@@ -1,0 +1,28 @@
+executable: executable # default is /usr/bin/snapraid
+config: snapraid.conf # default is /etc/snapraid.conf
+delete_threshold: int # default is None
+touch: bool # default is False
+logging: # disabled by default
+  file: file_to_log_to # no default
+  max_size: int # no default
+
+scrub: # disabled by default
+  plan: int # default is 8
+  older_than: int # default is 10
+
+notify:
+  discord: # disabled by default
+    webhook: discord_webhook
+  email: #disabled by default
+    from_email: example@example.com # no default
+    to_email: example@example.com # no default
+    subject: example@example.com # no default
+    smtp:
+      host: smtp.google.com # no default
+      port: Optional[int] # Optional, no default
+      user: str # usually the email address
+      password: # usually app password
+      ssl: bool # default is False
+      tls: bool # default is False
+    short: bool # default is False
+    max_size: int # default is 500

@@ -1,1 +1,19 @@
 snapraid-runner.conf
+
+# Byte-compiled / optimized / DLL files
+**/__pycache__
+*.py[cod]
+
+# Distribution / packaging
+build/
+*.egg-info/
+
+# Environments
+.env
+
+# mypy
+**/.mypy_cache
+
+**/.idea
+
+**/.pytest_cache
