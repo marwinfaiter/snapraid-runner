@@ -1,28 +1,28 @@
 from attrs import define
 from io import StringIO
 import logging
+import logging.handlers
 import sys
 from typing import Optional
 
 from .config import Config
+from .log_levels import OUTPUT, OUTERR
 
 
 @define(frozen=True)
 class Loggers:
     root_logger: logging.Logger
     console_logger: logging.StreamHandler
-    file_logger: Optional[logging.Logger] = None
+    file_logger: Optional[logging.handlers.RotatingFileHandler] = None
     email_logger: Optional[logging.StreamHandler] = None
 
     @classmethod
     def create_loggers(cls, config: Config) -> "Loggers":
         log_format = logging.Formatter("%(asctime)s [%(levelname)-6.6s] %(message)s")
         root_logger = logging.getLogger()
-        logging.OUTPUT = 15
-        logging.addLevelName(logging.OUTPUT, "OUTPUT")
-        logging.OUTERR = 25
-        logging.addLevelName(logging.OUTERR, "OUTERR")
-        root_logger.setLevel(logging.OUTPUT)
+        logging.addLevelName(OUTPUT, "OUTPUT")
+        logging.addLevelName(OUTERR, "OUTERR")
+        root_logger.setLevel(OUTPUT)
 
         console_logger = logging.StreamHandler(sys.stdout)
         console_logger.setFormatter(log_format)

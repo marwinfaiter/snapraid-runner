@@ -17,7 +17,7 @@ class Config:
     notify: Notify = field(factory=Notify)
     scrub: Optional[Scrub] = None
 
-    def __post_init__(self):
+    def __attrs_post_init__ (self) -> None:
         if not os.path.isfile(self.executable):
             error_string = f"The configured snapraid executable {self.executable!r} does not exist or is not a file"
             error(error_string)

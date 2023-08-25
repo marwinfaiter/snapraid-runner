@@ -53,6 +53,7 @@ setup(
     ],
     extras_require={
         "test": [
+            "types-PyYAML",
             "mypy",
             "pytest",
             "pylint",
