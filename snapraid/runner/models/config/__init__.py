@@ -7,7 +7,7 @@ from .notify import Notify
 from .scrub import Scrub
 from .logging import Logging
 
-@define(frozen=True)
+@define
 class Config:
     executable: str = "/usr/bin/snapraid"
     config: str = "/etc/snapraid.conf"

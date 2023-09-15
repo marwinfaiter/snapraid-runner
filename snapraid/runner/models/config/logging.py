@@ -1,6 +1,6 @@
 from attrs import define
 
-@define(frozen=True)
+@define
 class Logging:
     file: str
     max_size: int

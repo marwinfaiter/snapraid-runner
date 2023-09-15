@@ -1,6 +1,6 @@
 from attrs import define
 
-@define(frozen=True)
+@define
 class Scrub:
     plan: int = 8
     older_than: int = 10

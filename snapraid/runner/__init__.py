@@ -34,7 +34,13 @@ class SnapraidRunner:
     def _get_config(self) -> Config:
         with open(self.cli_args.config, encoding="utf-8") as f:
             config_dict = yaml.full_load(f) or {}
-            return structure(config_dict, Config)
+            config = structure(config_dict, Config)
+            if self.cli_args.scrub is not None:
+                if self.cli_args.scrub is False:
+                    config.scrub = None
+                elif self.cli_args.scrub is True and not config.scrub:
+                    config.scrub = Scrub()
+            return config
 
     def touch(self) -> None:
         self.run_snapraid(Command.TOUCH)
@@ -187,3 +193,6 @@ def main() -> None:
         logging.error(snapraid_runner.status.value)
     finally:
         snapraid_runner.notify()
+
+if __name__ == "__main__":
+    main()
