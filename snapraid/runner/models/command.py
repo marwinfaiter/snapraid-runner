@@ -5,3 +5,4 @@ class Command(Enum):
     DIFF = "diff"
     SYNC = "sync"
     SCRUB = "scrub"
+    STATUS = "status"

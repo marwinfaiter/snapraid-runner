@@ -17,7 +17,7 @@ from .models.config import Config
 from .models.loggers import Loggers
 from .models.diff import Diff
 from .models.command import Command
-from .models.status import Status
+from .models.state import State
 from .models.config.scrub import Scrub
 from .models.log_levels import OUTPUT, OUTERR
 from .models.config.email import EmailConfig
@@ -28,8 +28,9 @@ class SnapraidRunner:
         self.cli_args = CLIArgs().parse_args()
         self.config = self._get_config()
         self.loggers = Loggers.create_loggers(self.config)
-        self.status = Status.SUCCESS
+        self.state = State.SUCCESS
         self.diff_output: Diff
+        self.status_output: list[str]
 
     def _get_config(self) -> Config:
         with open(self.cli_args.config, encoding="utf-8") as f:
@@ -42,14 +43,17 @@ class SnapraidRunner:
                     config.scrub = Scrub()
             return config
 
-    def touch(self) -> None:
-        self.run_snapraid(Command.TOUCH)
+    def touch(self) -> list[str]:
+        return self.run_snapraid(Command.TOUCH)
 
-    def sync(self) -> None:
-        self.run_snapraid(Command.SYNC)
+    def sync(self) -> list[str]:
+        return self.run_snapraid(Command.SYNC)
 
-    def scrub(self) -> None:
-        self.run_snapraid(Command.SCRUB)
+    def scrub(self) -> list[str]:
+        return self.run_snapraid(Command.SCRUB)
+
+    def status(self) -> list[str]:
+        return self.run_snapraid(Command.STATUS)
 
     def diff(self) -> Diff:
         output = self.run_snapraid(Command.DIFF)
@@ -126,7 +130,7 @@ class SnapraidRunner:
             )
 
         msg = MIMEText(body, "plain", "utf-8")
-        msg["Subject"] = f"self.config.notify.email.subject: {self.status.name.title()}"
+        msg["Subject"] = f"self.config.notify.email.subject: {self.state.name.title()}"
         msg["From"] = self.config.notify.email.from_email
         msg["To"] = self.config.notify.email.to_email
         server: smtplib.SMTP_SSL | smtplib.SMTP
@@ -155,8 +159,8 @@ class SnapraidRunner:
     def notify_discord(self) -> None:
         assert isinstance(self.config.notify.discord, DiscordConfig)
         embed = Embed(
-            color=Colour.green() if self.status == Status.SUCCESS else Colour.red(),
-            title=f"Snapraid summary: {self.status.name.title()}"
+            color=Colour.green() if self.state == State.SUCCESS else Colour.red(),
+            title=f"Snapraid summary: {self.state.name.title()}",
         )
         if self.diff_output:
             embed.add_field(name="Diff", value="No changes" if not self.diff_output.changes else "", inline=False)
@@ -166,6 +170,9 @@ class SnapraidRunner:
                 embed.add_field(name="", value="", inline=False)
                 embed.add_field(name="Moved", value=self.diff_output.moved)
                 embed.add_field(name="Updated", value=self.diff_output.updated)
+        if self.status_output:
+            embed.description = "".join(self.status_output[-7:-1])
+
         self.config.notify.discord.webhook.send(embed=embed)
 
 def main() -> None:
@@ -185,12 +192,14 @@ def main() -> None:
         if snapraid_runner.config.scrub or snapraid_runner.cli_args.scrub is True:
             snapraid_runner.scrub()
 
+        snapraid_runner.status_output = snapraid_runner.status()
+
         logging.info("All done")
-        logging.info(snapraid_runner.status.value)
+        logging.info(snapraid_runner.state.value)
     except Exception as e_string: # pylint: disable=broad-exception-caught
         logging.exception("Run failed due to unexpected exception: %s", e_string)
-        snapraid_runner.status = Status.FAILED
-        logging.error(snapraid_runner.status.value)
+        snapraid_runner.state = State.FAILED
+        logging.error(snapraid_runner.state.value)
     finally:
         snapraid_runner.notify()
 
