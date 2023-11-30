@@ -1,27 +1,28 @@
 #!/usr/bin/env python3
 import logging
-import subprocess
 import re
 import smtplib
-from email.mime.text import MIMEText
+import subprocess
 from email import charset
-from io import TextIOWrapper, StringIO
+from email.mime.text import MIMEText
+from io import StringIO, TextIOWrapper
+from typing import Optional
 
 import yaml
 from cattrs import structure
-from discord import Embed, Colour
-
+from discord import Colour, Embed
 
 from .models.cli_args import CLIArgs
-from .models.config import Config
-from .models.loggers import Loggers
-from .models.diff import Diff
 from .models.command import Command
-from .models.state import State
-from .models.config.scrub import Scrub
-from .models.log_levels import OUTPUT, OUTERR
-from .models.config.email import EmailConfig
+from .models.config import Config
 from .models.config.discord_config import DiscordConfig
+from .models.config.email import EmailConfig
+from .models.config.scrub import Scrub
+from .models.diff import Diff
+from .models.log_levels import OUTERR, OUTPUT
+from .models.loggers import Loggers
+from .models.state import State
+
 
 class SnapraidRunner:
     def __init__(self) -> None:
@@ -29,8 +30,8 @@ class SnapraidRunner:
         self.config = self._get_config()
         self.loggers = Loggers.create_loggers(self.config)
         self.state = State.SUCCESS
-        self.diff_output: Diff
-        self.status_output: list[str]
+        self.diff_output: Optional[Diff] = None
+        self.status_output: Optional[list[str]] = None
 
     def _get_config(self) -> Config:
         with open(self.cli_args.config, encoding="utf-8") as f:
@@ -192,15 +193,13 @@ def main() -> None:
         if snapraid_runner.config.scrub or snapraid_runner.cli_args.scrub is True:
             snapraid_runner.scrub()
 
-        snapraid_runner.status_output = snapraid_runner.status()
-
         logging.info("All done")
-        logging.info(snapraid_runner.state.value)
     except Exception as e_string: # pylint: disable=broad-exception-caught
         logging.exception("Run failed due to unexpected exception: %s", e_string)
         snapraid_runner.state = State.FAILED
-        logging.error(snapraid_runner.state.value)
     finally:
+        logging.error(snapraid_runner.state.value)
+        snapraid_runner.status_output = snapraid_runner.status()
         snapraid_runner.notify()
 
 if __name__ == "__main__":
