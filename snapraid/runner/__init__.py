@@ -94,17 +94,22 @@ class SnapraidRunner:
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             encoding="utf-8", errors="replace"
         ) as process:
-            stdout = []
-            assert isinstance(process.stdout, TextIOWrapper)
-            for line in iter(process.stdout.readline, ""):
-                logging.log(OUTPUT, line.rstrip())
-                stdout.append(line)
+            try:
+                stdout = []
+                assert isinstance(process.stdout, TextIOWrapper)
+                for line in iter(process.stdout.readline, ""):
+                    logging.log(OUTPUT, line.rstrip())
+                    stdout.append(line)
 
-            assert isinstance(process.stderr, TextIOWrapper)
-            for line in iter(process.stderr.readline, ""):
-                logging.log(OUTERR, line.rstrip())
-            logging.info("*" * 60)
-            return stdout
+                assert isinstance(process.stderr, TextIOWrapper)
+                for line in iter(process.stderr.readline, ""):
+                    logging.log(OUTERR, line.rstrip())
+                logging.info("*" * 60)
+                return stdout
+            except KeyboardInterrupt:
+                process.terminate()
+                process.wait()
+                raise
 
     def notify(self) -> None:
         if self.config.notify.email:
@@ -194,11 +199,15 @@ def main() -> None:
             snapraid_runner.scrub()
 
         logging.info("All done")
+        logging.info(snapraid_runner.state.value)
     except Exception as e_string: # pylint: disable=broad-exception-caught
         logging.exception("Run failed due to unexpected exception: %s", e_string)
         snapraid_runner.state = State.FAILED
-    finally:
         logging.error(snapraid_runner.state.value)
+    except KeyboardInterrupt:
+        snapraid_runner.state = State.KEYBOARD_INTERRUPT
+        logging.error(snapraid_runner.state.value)
+    finally:
         snapraid_runner.status_output = snapraid_runner.status()
         snapraid_runner.notify()
 
