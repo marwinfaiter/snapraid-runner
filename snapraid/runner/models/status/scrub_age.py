@@ -3,7 +3,10 @@ import re
 from attrs import define
 from cattrs import structure
 
-SCRUB_AGE_REGEX = r"The oldest block was scrubbed (?P<oldest>\d+) days ago, the median (?P<median>\d+), the newest (?P<newest>\d+)."
+SCRUB_AGE_REGEX = (
+    r"The oldest block was scrubbed (?P<oldest>\d+) days ago, "
+    r"the median (?P<median>\d+), the newest (?P<newest>\d+)."
+)
 
 @define
 class ScrubAge:

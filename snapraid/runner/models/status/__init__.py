@@ -26,11 +26,16 @@ class Status:
             if array_scrubbed_match := re.search(r"The (\d+)% of the array is not scrubbed\.", line):
                 percent_array_scrubbed = 100 - int(array_scrubbed_match.group(1))
 
-            if files_sub_second_timestamp_match := re.search(r"You have (\d+) files with zero sub-second timestamp\.", line):
+            if files_sub_second_timestamp_match := re.search(
+                r"You have (\d+) files with zero sub-second timestamp\.", line
+            ):
                 files_sub_second_timestamp = int(files_sub_second_timestamp_match.group(1))
 
         return cls(
-            warnings=[warning.removeprefix("WARNING! ") for warning in filter(lambda l: re.search(r"^WARNING!.*", l), status)],
+            warnings=[
+                warning.removeprefix("WARNING! ")
+                for warning in filter(lambda l: re.search(r"^WARNING!.*", l), status)
+            ],
             report=Report.parse_report("\n".join(status).split("\n\n")[1]),
             scrub_age=ScrubAge.parse_scrub_age("\n".join(status).split("\n\n")[3]),
             sync_in_progress="No sync is in progress." not in status,
@@ -42,7 +47,8 @@ class Status:
 
     def __str__(self) -> str:
         return (
-            f"The oldest block was scrubbed {self.scrub_age.oldest}, the median {self.scrub_age.median}, the newest {self.scrub_age.newest}\n\n"
+            f"The oldest block was scrubbed {self.scrub_age.oldest}, "
+            f"the median {self.scrub_age.median}, the newest {self.scrub_age.newest}\n\n"
             f"Sync in progress: {self.sync_in_progress}\n"
             f"Percent of array scrubbed {self.percent_array_scrubbed}%\n"
             f"Files with zero sub-second timestamp: {self.files_sub_second_timestamp}\n"

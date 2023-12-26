@@ -5,7 +5,16 @@ from cattrs import structure
 
 from .disk import Disk
 
-DISK_REGEX = r"^\s*(?P<files>\d+)\s+(?P<fragmented_files>\d+)\s+(?P<excess_fragments>\d+)\s+(?P<wasted_gb>[\d\.-]+)\s+(?P<used_gb>\d+)\s+(?P<free_gb>\d+)\s+(?P<use>\d+%)(?:$|\s+(?P<name>\w+$))"
+DISK_REGEX = (
+    r"^\s*(?P<files>\d+)"
+    r"\s+(?P<fragmented_files>\d+)"
+    r"\s+(?P<excess_fragments>\d+)"
+    r"\s+(?P<wasted_gb>[\d\.-]+)"
+    r"\s+(?P<used_gb>\d+)"
+    r"\s+(?P<free_gb>\d+)"
+    r"\s+(?P<use>\d+%)"
+    r"(?:$|\s+(?P<name>\w+$))"
+)
 
 @define
 class Report:
