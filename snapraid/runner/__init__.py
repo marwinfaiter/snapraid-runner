@@ -22,6 +22,7 @@ from .models.diff import Diff
 from .models.log_levels import OUTERR, OUTPUT
 from .models.loggers import Loggers
 from .models.state import State
+from .models.status import Status
 
 
 class SnapraidRunner:
@@ -31,7 +32,7 @@ class SnapraidRunner:
         self.loggers = Loggers.create_loggers(self.config)
         self.state = State.SUCCESS
         self.diff_output: Optional[Diff] = None
-        self.status_output: Optional[list[str]] = None
+        self.status_output: Optional[Status] = None
 
     def _get_config(self) -> Config:
         with open(self.cli_args.config, encoding="utf-8") as f:
@@ -53,8 +54,8 @@ class SnapraidRunner:
     def scrub(self) -> list[str]:
         return self.run_snapraid(Command.SCRUB)
 
-    def status(self) -> list[str]:
-        return self.run_snapraid(Command.STATUS)
+    def status(self) -> Status:
+        return Status.parse_status(self.run_snapraid(Command.STATUS))
 
     def diff(self) -> Diff:
         output = self.run_snapraid(Command.DIFF)
@@ -99,7 +100,7 @@ class SnapraidRunner:
                 assert isinstance(process.stdout, TextIOWrapper)
                 for line in iter(process.stdout.readline, ""):
                     logging.log(OUTPUT, line.rstrip())
-                    stdout.append(line)
+                    stdout.append(line.rstrip())
 
                 assert isinstance(process.stderr, TextIOWrapper)
                 for line in iter(process.stderr.readline, ""):
@@ -177,7 +178,7 @@ class SnapraidRunner:
                 embed.add_field(name="Moved", value=self.diff_output.moved)
                 embed.add_field(name="Updated", value=self.diff_output.updated)
         if self.status_output:
-            embed.description = "".join(self.status_output[-7:-1])
+            embed.description = str(self.status_output)
 
         self.config.notify.discord.webhook.send(embed=embed)
 
@@ -187,7 +188,8 @@ def main() -> None:
         logging.info("=" * 60)
         logging.info("Run started")
         logging.info("=" * 60)
-        if snapraid_runner.config.touch:
+        snapraid_runner.status_output = snapraid_runner.status()
+        if snapraid_runner.config.touch and snapraid_runner.status_output.files_sub_second_timestamp:
             snapraid_runner.touch()
         diff = snapraid_runner.diff()
         if diff.changes:

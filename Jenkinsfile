@@ -38,6 +38,11 @@ pipeline {
                                 sh "python -m pylint snapraid"
                             }
                         }
+                        stage("Run pytest") {
+                            steps {
+                                sh "python -m pytest tests"
+                            }
+                        }
                     }
                 }
                 stage("Build wheel") {
