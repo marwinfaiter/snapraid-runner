@@ -33,6 +33,7 @@ class SnapraidRunner:
         self.state = State.SUCCESS
         self.diff_output: Optional[Diff] = None
         self.status_output: Optional[Status] = None
+        self.error: Optional[str] = None
 
     def _get_config(self) -> Config:
         with open(self.cli_args.config, encoding="utf-8") as f:
@@ -177,7 +178,9 @@ class SnapraidRunner:
                 embed.add_field(name="", value="", inline=False)
                 embed.add_field(name="Moved", value=self.diff_output.moved)
                 embed.add_field(name="Updated", value=self.diff_output.updated)
-        if self.status_output:
+        if self.error:
+            embed.description = self.error
+        elif self.status_output:
             embed.description = str(self.status_output)
 
         self.config.notify.discord.webhook.send(embed=embed)
@@ -188,29 +191,32 @@ def main() -> None:
         logging.info("=" * 60)
         logging.info("Run started")
         logging.info("=" * 60)
-        snapraid_runner.status_output = snapraid_runner.status()
-        if snapraid_runner.config.touch and snapraid_runner.status_output.files_sub_second_timestamp:
-            snapraid_runner.touch()
         diff = snapraid_runner.diff()
         if diff.changes:
             snapraid_runner.sync()
         else:
             logging.info("No changes detected, no sync required")
 
+        snapraid_runner.status_output = snapraid_runner.status()
+        if snapraid_runner.config.touch and snapraid_runner.status_output.files_sub_second_timestamp:
+            snapraid_runner.touch()
+
         if snapraid_runner.config.scrub or snapraid_runner.cli_args.scrub is True:
             snapraid_runner.scrub()
+
+        snapraid_runner.status_output = snapraid_runner.status()
 
         logging.info("All done")
         logging.info(snapraid_runner.state.value)
     except Exception as e_string: # pylint: disable=broad-exception-caught
         logging.exception("Run failed due to unexpected exception: %s", e_string)
+        snapraid_runner.error = str(e_string)
         snapraid_runner.state = State.FAILED
         logging.error(snapraid_runner.state.value)
     except KeyboardInterrupt:
         snapraid_runner.state = State.KEYBOARD_INTERRUPT
         logging.error(snapraid_runner.state.value)
     finally:
-        snapraid_runner.status_output = snapraid_runner.status()
         snapraid_runner.notify()
 
 if __name__ == "__main__":
