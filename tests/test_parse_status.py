@@ -7,7 +7,7 @@ from snapraid.runner.models.status.scrub_age import ScrubAge
 
 
 class TestParseStatus(TestCase):
-    def test_perfect_state(self):
+    def test_perfect_state(self) -> None:
         status = Status.parse_status(PERFECT_STATE)
         assert status.warnings == ["With 7 disks it's recommended to use two parity levels."]
         assert status.report == Report(

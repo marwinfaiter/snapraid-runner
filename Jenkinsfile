@@ -30,12 +30,12 @@ pipeline {
                     stages {
                         stage("Run mypy") {
                             steps {
-                                sh "python -m mypy snapraid"
+                                sh "python -m mypy snapraid tests"
                             }
                         }
                         stage("Run pylint") {
                             steps {
-                                sh "python -m pylint snapraid"
+                                sh "python -m pylint snapraid tests"
                             }
                         }
                         stage("Run pytest") {

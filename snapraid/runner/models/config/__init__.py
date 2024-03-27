@@ -1,11 +1,13 @@
-from attrs import define, field
-from typing import Optional
 import os
 from logging import error
+from typing import Optional
 
+from attrs import define, field
+
+from .logging import Logging
 from .notify import Notify
 from .scrub import Scrub
-from .logging import Logging
+
 
 @define
 class Config:
@@ -15,7 +17,7 @@ class Config:
     touch: bool = False
     delete_threshold: Optional[int] = None
     notify: Notify = field(factory=Notify)
-    scrub: Optional[Scrub] = None
+    scrub: list[Scrub] = field(factory=list)
 
     def __attrs_post_init__ (self) -> None:
         if not os.path.isfile(self.executable):

@@ -39,11 +39,8 @@ class SnapraidRunner:
         with open(self.cli_args.config, encoding="utf-8") as f:
             config_dict = yaml.full_load(f) or {}
             config = structure(config_dict, Config)
-            if self.cli_args.scrub is not None:
-                if self.cli_args.scrub is False:
-                    config.scrub = None
-                elif self.cli_args.scrub is True and not config.scrub:
-                    config.scrub = Scrub()
+            if self.cli_args.scrub is True and not config.scrub:
+                config.scrub = [Scrub(plan=8, older_than=10)]
             return config
 
     def touch(self) -> list[str]:
@@ -52,8 +49,8 @@ class SnapraidRunner:
     def sync(self) -> list[str]:
         return self.run_snapraid(Command.SYNC)
 
-    def scrub(self) -> list[str]:
-        return self.run_snapraid(Command.SCRUB)
+    def scrub(self, scrub_args: Scrub) -> list[str]:
+        return self.run_snapraid(Command.SCRUB, scrub_args)
 
     def status(self) -> Status:
         return Status.parse_status(self.run_snapraid(Command.STATUS))
@@ -78,18 +75,18 @@ class SnapraidRunner:
 
         return self.diff_output
 
-    def run_snapraid(self, command: Command) -> list[str]:
+    def run_snapraid(self, command: Command, scrub_args: Optional[Scrub]=None) -> list[str]:
         logging.info("Running %s...", command.value)
         args = [
             "snapraid",
-            command.value,
+            command.value
         ]
-        if all([command == Command.SCRUB, self.config.scrub]):
-            assert isinstance(self.config.scrub, Scrub)
-            args.extend([
-                "--plan", str(self.config.scrub.plan),
-                "--older-than", str(self.config.scrub.older_than)
-            ])
+
+        if command == Command.SCRUB:
+            assert isinstance(scrub_args, Scrub)
+            args.extend(["--plan", str(scrub_args.plan)])
+            if scrub_args.older_than:
+                args.extend(["--older-than", str(scrub_args.older_than)])
 
         with subprocess.Popen(
             args,
@@ -201,8 +198,9 @@ def main() -> None:
         if snapraid_runner.config.touch and snapraid_runner.status_output.files_sub_second_timestamp:
             snapraid_runner.touch()
 
-        if snapraid_runner.config.scrub or snapraid_runner.cli_args.scrub is True:
-            snapraid_runner.scrub()
+        if snapraid_runner.config.scrub:
+            for scrub in snapraid_runner.config.scrub:
+                snapraid_runner.scrub(scrub)
 
         snapraid_runner.status_output = snapraid_runner.status()
 
