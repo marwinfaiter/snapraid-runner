@@ -19,7 +19,7 @@ from .models.config.discord_config import DiscordConfig
 from .models.config.email import EmailConfig
 from .models.config.scrub import Scrub
 from .models.diff import Diff
-from .models.log_levels import OUTERR, OUTPUT
+from .models.log_levels import OUTPUT
 from .models.loggers import Loggers
 from .models.state import State
 from .models.status import Status
@@ -90,7 +90,7 @@ class SnapraidRunner:
 
         with subprocess.Popen(
             args,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE,
             encoding="utf-8", errors="replace"
         ) as process:
             try:
@@ -100,9 +100,9 @@ class SnapraidRunner:
                     logging.log(OUTPUT, line.rstrip())
                     stdout.append(line.rstrip())
 
-                assert isinstance(process.stderr, TextIOWrapper)
-                for line in iter(process.stderr.readline, ""):
-                    logging.log(OUTERR, line.rstrip())
+                # assert isinstance(process.stderr, TextIOWrapper)
+                # for line in iter(process.stderr.readline, ""):
+                #     logging.log(OUTERR, line.rstrip())
                 logging.info("*" * 60)
                 return stdout
             except KeyboardInterrupt:
