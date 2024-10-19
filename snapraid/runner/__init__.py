@@ -34,6 +34,7 @@ class SnapraidRunner:
         self.diff_output: Optional[Diff] = None
         self.status_output: Optional[Status] = None
         self.error: Optional[str] = None
+        logging.log(OUTPUT, self.config)
 
     def _get_config(self) -> Config:
         with open(self.cli_args.config, encoding="utf-8") as f:
@@ -41,6 +42,8 @@ class SnapraidRunner:
             config = structure(config_dict, Config)
             if self.cli_args.scrub is True and not config.scrub:
                 config.scrub = [Scrub(plan=8, older_than=10)]
+            elif self.cli_args.scrub is False:
+                config.scrub = []
             return config
 
     def touch(self) -> list[str]:
