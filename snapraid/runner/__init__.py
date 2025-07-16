@@ -198,6 +198,10 @@ def main() -> None:
             logging.info("No changes detected, no sync required")
 
         snapraid_runner.status_output = snapraid_runner.status()
+        if snapraid_runner.status_output.sync_in_progress:
+            logging.info("Sync in progress, continuing")
+            snapraid_runner.sync()
+
         if snapraid_runner.config.touch and snapraid_runner.status_output.files_sub_second_timestamp:
             snapraid_runner.touch()
 
